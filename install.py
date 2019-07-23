@@ -1,4 +1,5 @@
 import mysql.connector
+
 from config import *
 
 conn = mysql.connector.connect(
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `pairing` (
     `expected_percent_win` DECIMAL(5,2) DEFAULT NULL,
     `step_number` INTEGER DEFAULT NULL,
     `step_factor` DECIMAL(5,2) DEFAULT NULL,
+    `step_gap_percent` DECIMAL(5,2) DEFAULT NULL,
     FOREIGN KEY (`primary_currency_id`) REFERENCES `currency`(`currency_id`)
         ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (`secondary_currency_id`) REFERENCES `currency`(`currency_id`)

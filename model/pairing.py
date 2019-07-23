@@ -1,8 +1,10 @@
 from __future__ import annotations
-from model.currency import Currency
+
 from decimal import Decimal
-from system.database import cursor, conn
 from typing import Optional
+
+from model.currency import Currency
+from system.database import cursor, conn
 
 
 class Pairing(object):
@@ -15,6 +17,7 @@ class Pairing(object):
     __expected_percent_win: Decimal = None
     __step_number: int = None
     __step_factor: Decimal = None
+    __step_gap_percent: Decimal = None
 
     def __init__(
             self,
@@ -26,7 +29,8 @@ class Pairing(object):
             active: bool = None,
             expected_percent_win: Decimal = None,
             step_number: int = None,
-            step_factor: Decimal = None
+            step_factor: Decimal = None,
+            step_gap_percent: Decimal = None
     ):
         if(primary_currency is not None
                 or secondary_currency is not None
@@ -43,8 +47,9 @@ class Pairing(object):
                 .set_secondary_min(secondary_min)\
                 .set_active(active)\
                 .set_expected_percent_win(expected_percent_win)\
-                .set_step_number(step_number)\
-                .set_step_factor(step_factor)
+                .set_step_number(step_number) \
+                .set_step_factor(step_factor) \
+                .set_step_gap_percent(step_gap_percent)
         elif pairing_id is not None:
             self.retrieve_from_database(pairing_id)
         else:
@@ -108,6 +113,10 @@ class Pairing(object):
 
     def set_step_factor(self: Pairing, step_factor: Optional[Decimal]) -> Pairing:
         self.__step_factor = step_factor
+        return self
+
+    def set_step_gap_percent(self: Pairing, step_gap_percent: Optional[Decimal]) -> Pairing:
+        self.__step_gap_percent = step_gap_percent
         return self
 
     def persist_in_database(self: Pairing):
@@ -181,7 +190,8 @@ class Pairing(object):
                `active`,
                `expected_percent_win`,
                `step_number`,
-               `step_factor`
+               `step_factor`,
+               `step_gap_percent`
         FROM `pairing`
         INNER JOIN `currency` `primary_currency` ON `pairing`.`primary_currency_id` = `primary_currency`.`currency_id`
         INNER JOIN `currency` `secondary_currency` ON `pairing`.`secondary_currency_id` = `secondary_currency`.`currency_id`
@@ -196,8 +206,9 @@ class Pairing(object):
                 .set_secondary_min(result[8])\
                 .set_active(result[9] == 1)\
                 .set_expected_percent_win(result[10])\
-                .set_step_number(result[11])\
-                .set_step_factor(result[12])
+                .set_step_number(result[11]) \
+                .set_step_factor(result[12]) \
+                .set_step_gap_percent(result[13])
         else:
             raise ValueError("No pairing found with pairing_id=%d" % pairing_id)
 
@@ -219,7 +230,7 @@ class Pairing(object):
                )
 
 
-def get_active_pairing() -> list[Pairing]:
+def get_trading_pairing() -> list[Pairing]:
     query_select = """
     SELECT `pairing_id`,
            `primary_currency_id`,
@@ -233,11 +244,12 @@ def get_active_pairing() -> list[Pairing]:
            `active`,
            `expected_percent_win`,
            `step_number`,
-           `step_factor`
+           `step_factor`,
+           `step_gap_percent`
     FROM `pairing`
     INNER JOIN `currency` `primary_currency` ON `pairing`.`primary_currency_id` = `primary_currency`.`currency_id`
     INNER JOIN `currency` `secondary_currency` ON `pairing`.`secondary_currency_id` = `secondary_currency`.`currency_id`
-    WHERE `pairing`.`active` = %s"""
+    WHERE `pairing`.`trading` = %s"""
     cursor.execute(query_select, (1,))
     results = cursor.fetchall()
     return_value = []
@@ -251,7 +263,8 @@ def get_active_pairing() -> list[Pairing]:
             result[9] == 1,
             result[10],
             result[11],
-            result[12]
+            result[12],
+            result[13]
         )
         return_value.append(pairing)
     return return_value
