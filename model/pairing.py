@@ -230,7 +230,7 @@ class Pairing(object):
                )
 
 
-def get_trading_pairing() -> list[Pairing]:
+def get_trading_pairing() -> list:
     query_select = """
     SELECT `pairing_id`,
            `primary_currency_id`,

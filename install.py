@@ -53,6 +53,17 @@ CREATE TABLE IF NOT EXISTS `trade` (
 """)
 
 cursor.execute("""
+CREATE TABLE IF NOT EXISTS `transaction` (
+    `transaction_id` INTEGER AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    `pairing_id` INTEGER NOT NULL,
+    `performing` BOOLEAN NOT NULL,
+    `start_date` INTEGER NOT NULL,
+    `end_date` INTEGER DEFAULT NULL,
+    FOREIGN KEY (`pairing_id`) REFERENCES `pairing`(`pairing_id`)
+)
+""")
+
+cursor.execute("""
 INSERT INTO `currency`
 SELECT `currency_id`, `currency_code`, `currency_name` FROM (
 SELECT 1 as `currency_id`, 'THB' as `currency_code`, 'Thai Baht' as `currency_name`

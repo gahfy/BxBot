@@ -5,7 +5,7 @@
 First, you need to install required Python modules:
 
 ```bash
-pip3 install mysql.connector bigfloat requests websocket_client pytz
+pip3 install mysql.connector requests websocket_client pytz
 ```
 
 ## Database
@@ -21,7 +21,7 @@ python3 install.py
 
 ### Script to run
 
-Import data from webservices
+This script must be run every minutes
 ```bash
 python3 import.py
 ```

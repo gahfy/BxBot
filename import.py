@@ -1,9 +1,29 @@
-import requests
-from model.pairing import *
-from model.currency import Currency
+import hashlib
 from decimal import Decimal
+from time import time
+
+import pytz
+import requests
+
+from config import *
+from model.currency import Currency
+from model.pairing import *
 from model.trade import Trade
-from datetime import datetime
+from model.transaction import *
+
+
+def get_private_api_data(call_number: int):
+    nonce = int(time()) * 1000 + call_number
+    signature_clear = "%s%d%s" % (api_key, nonce, api_secret)
+    signature = hashlib.sha256(signature_clear.encode()).hexdigest()
+    return {
+        'key': api_key,
+        'nonce': "%d" % nonce,
+        'signature': signature
+    }
+
+
+private_api_call_number = 0
 
 # Get pairings
 pairings_json = requests.get("https://bx.in.th/api/pairing/").json()
@@ -20,7 +40,8 @@ for key in pairings_json:
     current_pairing.persist_in_database()
 
 # Get trades for active pairings
-pairings = get_active_pairing()
+pairings = get_trading_pairing()
+
 for pairing in pairings:
     json_trades = requests.get("https://bx.in.th/api/trade/?pairing=%d" % pairing.get_pairing_id()).json().get('trades')
     for json_trade in json_trades:
@@ -39,3 +60,21 @@ for pairing in pairings:
             json_trade.get('trade_type')
         )
         current_trade.persist_in_database()
+
+result = requests.post("https://bx.in.th/api/balance/", get_private_api_data(private_api_call_number)).json()
+private_api_call_number += 1
+
+balances = result.get('balance')
+
+for pairing in pairings:
+    transaction = get_performing_transaction_for_pairing(pairing)
+    if transaction is None:
+        transaction = Transaction(
+            None,
+            pairing,
+            True,
+            datetime.now(pytz.timezone('Asia/Bangkok')),
+            None
+        )
+        transaction.persist_in_database()
+    transaction.execute()
