@@ -59,9 +59,25 @@ CREATE TABLE IF NOT EXISTS `transaction` (
     `performing` BOOLEAN NOT NULL,
     `start_date` INTEGER NOT NULL,
     `end_date` INTEGER DEFAULT NULL,
+    `primary_start_balance` DECIMAL(20,8) NOT NULL,
+    `secondary_start_balance` DECIMAL(20,8) NOT NULL,
     FOREIGN KEY (`pairing_id`) REFERENCES `pairing`(`pairing_id`)
 )
 """)
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS `order` (
+    `order_id` INTEGER AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    `transaction_id` INTEGER NOT NULL,
+    `order_type` TINYINT NOT NULL,
+    `amount` DECIMAL(20, 8) NOT NULL,
+    `rate` DECIMAL(20, 8) NOT NULL,
+    `pending` BOOLEAN NOT NULL,
+    `date_open` INTEGER NOT NULL,
+    `date_close` INTEGER DEFAULT NULL,
+    `cancelled` BOOLEAN DEFAULT NULL,
+    FOREIGN KEY (`transaction_id`) REFERENCES `transaction`(`transaction_id`)
+)""")
 
 cursor.execute("""
 INSERT INTO `currency`

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from system.database import cursor
 
 
@@ -9,14 +10,14 @@ class Currency(object):
 
     def __init__(
             self,
-            currency_id:int = None,
+            currency_id: int = None,
             currency_code: str = None,
             currency_name: str = None
     ):
         if currency_id is not None or currency_name is not None:
-            self.set_currency_id(currency_id)\
-            .set_currency_code(currency_code)\
-            .set_currency_name(currency_name)
+            self.set_currency_id(currency_id) \
+                .set_currency_code(currency_code) \
+                .set_currency_name(currency_name)
         else:
             self.retrieve_from_database(currency_code)
 
@@ -32,6 +33,9 @@ class Currency(object):
         else:
             raise ValueError('currency_id must be not None.')
         return self
+
+    def get_currency_code(self: Currency) -> str:
+        return self.__currency_code
 
     def set_currency_code(self: Currency, currency_code: str) -> Currency:
         if currency_code is not None:
@@ -60,7 +64,7 @@ class Currency(object):
                 FROM `currency`
                 WHERE `currency_code` = %s
             """
-            cursor.execute(query, (currency_code, ))
+            cursor.execute(query, (currency_code,))
             result = cursor.fetchone()
             if result is not None:
                 self.set_currency_id(result[0])
@@ -73,4 +77,5 @@ class Currency(object):
         return self
 
     def __repr__(self: Currency) -> str:
-        return "<model.currency.Currency currency_id=%r, currency_code=%r, currency_name=%r>" % (self.__currency_id, self.__currency_code, self.__currency_name)
+        return "<model.currency.Currency currency_id=%r, currency_code=%r, currency_name=%r>" % (
+        self.__currency_id, self.__currency_code, self.__currency_name)

@@ -1,9 +1,12 @@
 from __future__ import annotations
-from model.pairing import Pairing
-from decimal import Decimal
+
 from datetime import datetime
-from system.database import cursor, conn
+from decimal import Decimal
+
 import pytz
+
+from model.pairing import Pairing
+from system.database import cursor, conn
 
 
 class Trade(object):
@@ -60,6 +63,9 @@ class Trade(object):
         else:
             raise ValueError('pairing must be not None.')
         return self
+
+    def get_rate(self: Trade) -> Decimal:
+        return self.__rate
 
     def set_rate(self: Trade, rate: Decimal) -> Trade:
         if rate is not None:
@@ -156,7 +162,6 @@ class Trade(object):
                 self.__trade_type
             ))
             conn.commit()
-            print("Inserting new trade")
         else:
             if self != result:
                 query_update = """
@@ -182,7 +187,6 @@ class Trade(object):
                     self.__trade_id
                 ))
                 conn.commit()
-                print("Updating trade")
 
     def __eq__(self: Trade, compare: Trade) -> bool:
         return (self.__trade_id == compare.__trade_id
@@ -211,3 +215,32 @@ class Trade(object):
             self.__order_id,
             self.__trade_type
         )
+
+
+def get_last_trade_for_pairing(pairing: Pairing) -> Trade:
+    query = """
+                SELECT `trade_id`,
+                       `pairing_id`,
+                       `rate`,
+                       `amount`,
+                       `trade_date`,
+                       `order_id`,
+                       `trade_type`
+                FROM `trade`
+                WHERE `pairing_id` = %s
+                ORDER BY `trade_date` DESC
+                LIMIT 0,1
+            """
+    cursor.execute(query, (pairing.get_pairing_id(),))
+    result = cursor.fetchone()
+    if result is not None:
+        return Trade(
+            result[0],
+            Pairing(result[1]),
+            result[2],
+            result[3],
+            datetime.fromtimestamp(result[4], pytz.timezone('Asia/Bangkok')),
+            result[5],
+            result[6])
+    else:
+        raise ValueError('No trade found with pairing_id %d' % pairing.get_pairing_id())
